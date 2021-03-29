@@ -2,11 +2,12 @@ const fs = require('fs')
 const path = require('path')
 const through = require('through2')
 const VinylFile = require('vinyl')
+const str = JSON.stringify
 
-const requirejsPath = require.resolve('requirejs/require.js')
+
 const bifyGlobalShimMap = {
-  process: 'node_modules/process/browser',
-  buffer: 'node_modules/buffer/index',
+  process: 'node_modules/process/browser.js',
+  buffer: 'node_modules/buffer/index.js',
 }
 
 module.exports = plugin
@@ -25,30 +26,24 @@ function plugin (browserify, pluginOpts) {
 
 function createPacker ({ projectDir }) {
   const entryFiles = []
-  const moduleDepMaps = {}
   const stream = through.obj(onModule, onDone)
   return stream
 
   function onModule (moduleData, _, next) {
-    const relativePath = getRelativePath(projectDir, moduleData.file)
+    const relativePath = path.relative(projectDir, moduleData.file)
     // collect entry files
     if (moduleData.entry) {
       entryFiles.push(relativePath)
     }
     // create and record relative depMap
     const moduleDirName = path.dirname(relativePath)
-    const relativeDepMap = createAmdConfigMap(projectDir, moduleDirName, moduleData.deps)
-    moduleDepMaps[relativePath] = relativeDepMap
+    const relativeDepMap = createRelativeDepMap(projectDir, moduleData.file, moduleData.deps)
     // transform module into AMD and output as vinyl file
     const isGlobalShim = Object.values(bifyGlobalShimMap).includes(relativePath)
     const bifyGlobalShimNames = Object.keys(bifyGlobalShimMap)
-    if (isGlobalShim) {
-      // ensure we dont cyclic require ourselves (e.g. buffer)
-      bifyGlobalShimNames.forEach(name => delete relativeDepMap[name])
-    }
     const globalShimsToApply = isGlobalShim ? [] : bifyGlobalShimNames
     const cjsDepNames = Object.values(relativeDepMap)
-    const transformedSource = transformCjsToAmd(moduleData.source, cjsDepNames, moduleData.entry, globalShimsToApply, moduleData)
+    const transformedSource = createModuleDefinition(relativePath, moduleData.source, globalShimsToApply, cjsDepNames, relativeDepMap)
     const moduleFile = new VinylFile({
       cwd: projectDir,
       path: moduleData.file,
@@ -60,33 +55,29 @@ function createPacker ({ projectDir }) {
 
   function onDone () {
     // add the requirejs amd runtime
-    const runtimeContent = fs.readFileSync(requirejsPath)
+    const runtimeContent = fs.readFileSync(__dirname + '/runtime.js')
     const runtimeFile = new VinylFile({
       cwd: projectDir,
-      path: 'require.js',
+      path: '__runtime__.js',
       contents: runtimeContent,
     })
     stream.push(runtimeFile)
-    // add a requirejs config file with module deps map
-    const requirejsConfig = { map: moduleDepMaps }
-    requirejsConfig.map['*'] = bifyGlobalShimMap
-    requirejsConfig.nodeIdCompat = true
-    const requirejsConfigObjContent = JSON.stringify(requirejsConfig, null, 2)
-    const requirejsConfigContent = `requirejs.config(${requirejsConfigObjContent})`
-    const requirejsConfigFile = new VinylFile({
+    // add the entrypoint callers
+    const startContent = fs.readFileSync(__dirname + '/start.js', 'utf8')
+      .split('{{entryFiles}}').join(str(entryFiles))
+    const startFile = new VinylFile({
       cwd: projectDir,
-      path: '__config__.js',
-      contents: Buffer.from(requirejsConfigContent, 'utf8'),
+      path: '__start__.js',
+      contents: Buffer.from(startContent, 'utf8'),
     })
-    stream.push(requirejsConfigFile)
+    stream.push(startFile)
     // add an html entry point
     const entryFileScriptTags = entryFiles.map((filepath) => createScriptTag(filepath))
-    const htmlContent = fs.readFileSync(__dirname + '/htmlTemplate.html', 'utf8')
-      .split('{{entryFiles}}').join(entryFileScriptTags)
+    const htmlContent = fs.readFileSync(__dirname + '/htmlTemplate.html')
     const htmlFile = new VinylFile({
       cwd: projectDir,
       path: 'index.html',
-      contents: Buffer.from(htmlContent, 'utf8'),
+      contents: htmlContent,
     })
     stream.push(htmlFile)
     // trigger end of stream
@@ -95,29 +86,22 @@ function createPacker ({ projectDir }) {
 
 }
 
-function createAmdConfigMap (projectDir, moduleRoot, bifyDepMap) {
+function createRelativeDepMap (projectDir, moduleId, bifyDepMap) {
   return Object.fromEntries(
     Object.entries(bifyDepMap)
       // ensure present
       .filter(([requestedName, maybeResolvedPath]) => Boolean(maybeResolvedPath))
       // rewrite resolved paths to relative path
       .map(([requestedName, resolvedPath]) => {
-        // amd will resolve relative paths before checking the depMap, so we must modify the map key to match
-        const resolvedRequestedPath = getDepMapResolvedPath(projectDir, moduleRoot, requestedName)
-        const resultPath = getDepMapRelativePath(projectDir, resolvedPath)
-        return [resolvedRequestedPath, resultPath]
+        return [requestedName, path.relative(projectDir, resolvedPath)]
       })
   )
 }
 
-function transformCjsToAmd (moduleSource, cjsDepNames, isEntry, globalShimNames, moduleData) {
-  const cjsSystemImports = ['require', 'exports', 'module']
-  const depsForAmd = [...cjsSystemImports, ...globalShimNames, ...cjsDepNames]
-  const serializedDepsArray = JSON.stringify(depsForAmd, null, 2)
-  const moduleDefinitionMethod = isEntry ? 'require' : 'define'
-  // for debugging
-  moduleSource = `//${JSON.stringify(moduleData.deps || {})}\n${moduleSource}`
-  return `${moduleDefinitionMethod}(${serializedDepsArray}, function(require, exports, module){\n\n${moduleSource}\n\n})`
+function createModuleDefinition (moduleId, moduleSource, globalShimNames, cjsDepNames, relativeDepMap) {
+  const depsForAmd = [...globalShimNames, ...cjsDepNames]
+  const serializedDepsArray = str(depsForAmd, null, 2)
+  return `gatorRuntime.defineModule(${str(moduleId)}, ${str(relativeDepMap)}, function(require, exports, module){\n\n${moduleSource}\n\n})`
 }
 
 function getDepMapResolvedPath (projectDir, fromPath, toPath) {
