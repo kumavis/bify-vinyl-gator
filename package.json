@@ -1,0 +1,14 @@
+{
+  "dependencies": {
+    "through2": "^4.0.2",
+    "vinyl": "^2.2.1",
+    "requirejs": "^2.3.6"
+  },
+  "devDependencies": {
+    "browserify": "^17.0.0",
+    "vinyl-fs": "^3.0.3"
+  },
+  "scripts": {
+    "test": "rm -rf dist/* && node build.js"
+  }
+}
