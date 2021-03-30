@@ -1,8 +1,10 @@
+const path = require('path')
 const browserify = require('browserify')
 const vfs = require('vinyl-fs')
-const bifyAmdVinylPlugin = require('./index.js')
+const bifyAmdVinylPlugin = require('../src/plugin')
 
-const sampleEntryFile = './example.js'
+const sampleEntryFile = path.join(__dirname, 'example.js')
+const distDir = path.join(__dirname, '..', 'dist')
 
 const bundler = browserify([sampleEntryFile], {
   plugin: [bifyAmdVinylPlugin],
@@ -12,4 +14,4 @@ const bundler = browserify([sampleEntryFile], {
 })
 
 bundler.bundle()
-  .pipe(vfs.dest(__dirname + '/dist'))
+  .pipe(vfs.dest(distDir))

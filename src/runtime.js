@@ -1,4 +1,4 @@
-;(function(){
+(function () {
 
   // contains the module initializer
   const moduleRegistry = new Map()
@@ -14,7 +14,6 @@
       moduleRegistryQueue,
     },
     defineModule (moduleId, depMap, moduleInitializer) {
-      console.log('defineModule', moduleId)
       // ensure no overwrites
       if (moduleRegistry.has(moduleId)) {
         throw new Error(`gator-runtime: module already defined "${moduleId}"`)
@@ -28,14 +27,17 @@
         resolve(moduleEntry)
       }
       // queue loading of all deps
-      Object.values(depMap).filter(Boolean).forEach(entry => gatorRuntime.requestModule(entry))
+      Object.values(depMap).filter(Boolean).forEach((entry) => gatorRuntime.requestModule(entry))
     },
     requestModule (moduleId) {
-      console.log('requestModule', moduleId)
       // if already registered, skip
-      if (moduleRegistry.has(moduleId)) return
+      if (moduleRegistry.has(moduleId)) {
+        return
+      }
       // if already loading, skip
-      if (moduleRegistryQueue.has(moduleId)) return
+      if (moduleRegistryQueue.has(moduleId)) {
+        return
+      }
       // start loading
       _loadModule(moduleId)
       const { promise, resolve } = deferred()
@@ -43,20 +45,18 @@
     },
     // (async)
     async ensureModuleLoaded (moduleId, visited = new Set()) {
-      console.log('ensureModuleLoaded', moduleId)
       visited.add(moduleId)
       const moduleEntry = await _getModuleWhenReady(moduleId)
       const { depMap } = moduleEntry
       await Promise.all(
         Object.values(depMap)
-        .filter(Boolean)
-        .filter(entry => !visited.has(entry))
-        .map(entry => gatorRuntime.ensureModuleLoaded(entry, visited))
+          .filter(Boolean)
+          .filter((entry) => !visited.has(entry))
+          .map((entry) => gatorRuntime.ensureModuleLoaded(entry, visited)),
       )
     },
     // assumes all modules loaded
     runModule (moduleId) {
-      console.log('runModule', moduleId)
       if (moduleCache.has(moduleId)) {
         return moduleCache.get(moduleId).exports
       }
@@ -78,9 +78,9 @@
     getPendingModules () {
       return (
         Array.from(moduleRegistryQueue.keys())
-          .filter(entry => !moduleRegistry.has(entry))
+          .filter((entry) => !moduleRegistry.has(entry))
       )
-    }
+    },
   })
   globalThis.gatorRuntime = gatorRuntime
 
@@ -105,7 +105,9 @@
   }
 
   function deferred () {
-    let resolve, reject, promise = new Promise((_resolve, _reject) => {
+    let resolve
+    let reject
+    const promise = new Promise((_resolve, _reject) => {
       resolve = _resolve
       reject = _reject
     })

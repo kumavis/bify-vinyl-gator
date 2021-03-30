@@ -1,7 +1,7 @@
 dist
-├── example.js
+├── example
+│   └── example.js
 ├── index.html
-├── index.js
 ├── node_modules
 │   ├── array-filter
 │   │   └── index.js
@@ -136,6 +136,8 @@ dist
 │   └── which-typed-array
 │       └── index.js
 ├── __runtime__.js
+├── src
+│   └── plugin.js
 └── __start__.js
 
-60 directories, 78 files
+62 directories, 78 files

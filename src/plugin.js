@@ -54,7 +54,7 @@ function createPacker ({ projectDir }) {
     stream.push(runtimeFile)
     // add the entrypoint callers
     /* eslint-disable-next-line node/no-sync */
-    const startContent = fs.readFileSync(path.join(__dirname, 'start.js'), 'utf8')
+    const startContent = fs.readFileSync(path.join(__dirname, 'start.js.template'), 'utf8')
       .split('{{entryFiles}}').join(str(entryFiles))
     const startFile = new VinylFile({
       cwd: projectDir,
@@ -64,7 +64,7 @@ function createPacker ({ projectDir }) {
     stream.push(startFile)
     // add an html entry point
     /* eslint-disable-next-line node/no-sync */
-    const htmlContent = fs.readFileSync(path.join(__dirname, 'htmlTemplate.html'))
+    const htmlContent = fs.readFileSync(path.join(__dirname, 'htmlManifest.html'))
     const htmlFile = new VinylFile({
       cwd: projectDir,
       path: 'index.html',
@@ -85,7 +85,7 @@ function createRelativeDepMap (projectDir, bifyDepMap) {
       // rewrite resolved paths to relative path
       .map(([requestedName, resolvedPath]) => {
         return [requestedName, path.relative(projectDir, resolvedPath)]
-      })
+      }),
   )
 }
 
