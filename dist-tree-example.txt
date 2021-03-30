@@ -1,0 +1,141 @@
+dist
+├── example.js
+├── index.html
+├── index.js
+├── node_modules
+│   ├── array-filter
+│   │   └── index.js
+│   ├── available-typed-arrays
+│   │   └── index.js
+│   ├── base64-js
+│   │   └── index.js
+│   ├── browserify
+│   │   └── lib
+│   │       └── _empty.js
+│   ├── browser-resolve
+│   │   └── empty.js
+│   ├── buffer
+│   │   └── index.js
+│   ├── call-bind
+│   │   ├── callBound.js
+│   │   └── index.js
+│   ├── clone
+│   │   └── clone.js
+│   ├── cloneable-readable
+│   │   └── index.js
+│   ├── clone-buffer
+│   │   └── index.js
+│   ├── clone-stats
+│   │   └── index.js
+│   ├── core-util-is
+│   │   └── lib
+│   │       └── util.js
+│   ├── es-abstract
+│   │   └── helpers
+│   │       └── getOwnPropertyDescriptor.js
+│   ├── events
+│   │   └── events.js
+│   ├── foreach
+│   │   └── index.js
+│   ├── function-bind
+│   │   ├── implementation.js
+│   │   └── index.js
+│   ├── get-intrinsic
+│   │   └── index.js
+│   ├── has
+│   │   └── src
+│   │       └── index.js
+│   ├── has-symbols
+│   │   ├── index.js
+│   │   └── shams.js
+│   ├── ieee754
+│   │   └── index.js
+│   ├── inherits
+│   │   └── inherits_browser.js
+│   ├── is-arguments
+│   │   └── index.js
+│   ├── isarray
+│   │   └── index.js
+│   ├── is-buffer
+│   │   └── index.js
+│   ├── is-generator-function
+│   │   └── index.js
+│   ├── is-typed-array
+│   │   └── index.js
+│   ├── path-browserify
+│   │   └── index.js
+│   ├── process
+│   │   └── browser.js
+│   ├── process-nextick-args
+│   │   └── index.js
+│   ├── readable-stream
+│   │   ├── lib
+│   │   │   ├── internal
+│   │   │   │   └── streams
+│   │   │   │       ├── BufferList.js
+│   │   │   │       ├── destroy.js
+│   │   │   │       └── stream-browser.js
+│   │   │   ├── _stream_duplex.js
+│   │   │   ├── _stream_passthrough.js
+│   │   │   ├── _stream_readable.js
+│   │   │   ├── _stream_transform.js
+│   │   │   └── _stream_writable.js
+│   │   ├── node_modules
+│   │   │   ├── safe-buffer
+│   │   │   │   └── index.js
+│   │   │   └── string_decoder
+│   │   │       └── lib
+│   │   │           └── string_decoder.js
+│   │   └── readable-browser.js
+│   ├── remove-trailing-separator
+│   │   └── index.js
+│   ├── replace-ext
+│   │   └── index.js
+│   ├── safe-buffer
+│   │   └── index.js
+│   ├── string_decoder
+│   │   └── lib
+│   │       └── string_decoder.js
+│   ├── through2
+│   │   ├── node_modules
+│   │   │   └── readable-stream
+│   │   │       ├── errors-browser.js
+│   │   │       ├── lib
+│   │   │       │   ├── internal
+│   │   │       │   │   └── streams
+│   │   │       │   │       ├── async_iterator.js
+│   │   │       │   │       ├── buffer_list.js
+│   │   │       │   │       ├── destroy.js
+│   │   │       │   │       ├── end-of-stream.js
+│   │   │       │   │       ├── from-browser.js
+│   │   │       │   │       ├── pipeline.js
+│   │   │       │   │       ├── state.js
+│   │   │       │   │       └── stream-browser.js
+│   │   │       │   ├── _stream_duplex.js
+│   │   │       │   ├── _stream_passthrough.js
+│   │   │       │   ├── _stream_readable.js
+│   │   │       │   ├── _stream_transform.js
+│   │   │       │   └── _stream_writable.js
+│   │   │       └── readable-browser.js
+│   │   └── through2.js
+│   ├── timers-browserify
+│   │   └── main.js
+│   ├── util
+│   │   ├── support
+│   │   │   ├── isBufferBrowser.js
+│   │   │   └── types.js
+│   │   └── util.js
+│   ├── util-deprecate
+│   │   └── browser.js
+│   ├── vinyl
+│   │   ├── index.js
+│   │   └── lib
+│   │       ├── inspect-stream.js
+│   │       ├── is-stream.js
+│   │       └── normalize.js
+│   └── which-typed-array
+│       └── index.js
+├── __runtime__.js
+└── __start__.js
+
+60 directories, 78 files
