@@ -2,13 +2,8 @@ const fs = require('fs')
 const path = require('path')
 const through = require('through2')
 const VinylFile = require('vinyl')
+
 const str = JSON.stringify
-
-
-const bifyGlobalShimMap = {
-  process: 'node_modules/process/browser.js',
-  buffer: 'node_modules/buffer/index.js',
-}
 
 module.exports = plugin
 
@@ -17,7 +12,6 @@ function plugin (browserify, pluginOpts) {
   // setup the plugin in a re-bundle friendly way
   browserify.on('reset', setupPlugin)
   setupPlugin()
-  return
 
   function setupPlugin () {
     browserify.pipeline.get('pack').splice(0, 1, createPacker({ projectDir }))
@@ -36,14 +30,9 @@ function createPacker ({ projectDir }) {
       entryFiles.push(relativePath)
     }
     // create and record relative depMap
-    const moduleDirName = path.dirname(relativePath)
-    const relativeDepMap = createRelativeDepMap(projectDir, moduleData.file, moduleData.deps)
+    const relativeDepMap = createRelativeDepMap(projectDir, moduleData.deps)
     // transform module into AMD and output as vinyl file
-    const isGlobalShim = Object.values(bifyGlobalShimMap).includes(relativePath)
-    const bifyGlobalShimNames = Object.keys(bifyGlobalShimMap)
-    const globalShimsToApply = isGlobalShim ? [] : bifyGlobalShimNames
-    const cjsDepNames = Object.values(relativeDepMap)
-    const transformedSource = createModuleDefinition(relativePath, moduleData.source, globalShimsToApply, cjsDepNames, relativeDepMap)
+    const transformedSource = createModuleDefinition(relativePath, moduleData.source, relativeDepMap)
     const moduleFile = new VinylFile({
       cwd: projectDir,
       path: moduleData.file,
@@ -55,7 +44,8 @@ function createPacker ({ projectDir }) {
 
   function onDone () {
     // add the requirejs amd runtime
-    const runtimeContent = fs.readFileSync(__dirname + '/runtime.js')
+    /* eslint-disable-next-line node/no-sync */
+    const runtimeContent = fs.readFileSync(path.join(__dirname, 'runtime.js'))
     const runtimeFile = new VinylFile({
       cwd: projectDir,
       path: '__runtime__.js',
@@ -63,7 +53,8 @@ function createPacker ({ projectDir }) {
     })
     stream.push(runtimeFile)
     // add the entrypoint callers
-    const startContent = fs.readFileSync(__dirname + '/start.js', 'utf8')
+    /* eslint-disable-next-line node/no-sync */
+    const startContent = fs.readFileSync(path.join(__dirname, 'start.js'), 'utf8')
       .split('{{entryFiles}}').join(str(entryFiles))
     const startFile = new VinylFile({
       cwd: projectDir,
@@ -72,8 +63,8 @@ function createPacker ({ projectDir }) {
     })
     stream.push(startFile)
     // add an html entry point
-    const entryFileScriptTags = entryFiles.map((filepath) => createScriptTag(filepath))
-    const htmlContent = fs.readFileSync(__dirname + '/htmlTemplate.html')
+    /* eslint-disable-next-line node/no-sync */
+    const htmlContent = fs.readFileSync(path.join(__dirname, 'htmlTemplate.html'))
     const htmlFile = new VinylFile({
       cwd: projectDir,
       path: 'index.html',
@@ -86,11 +77,11 @@ function createPacker ({ projectDir }) {
 
 }
 
-function createRelativeDepMap (projectDir, moduleId, bifyDepMap) {
+function createRelativeDepMap (projectDir, bifyDepMap) {
   return Object.fromEntries(
     Object.entries(bifyDepMap)
       // ensure present
-      .filter(([requestedName, maybeResolvedPath]) => Boolean(maybeResolvedPath))
+      .filter(([_, maybeResolvedPath]) => Boolean(maybeResolvedPath))
       // rewrite resolved paths to relative path
       .map(([requestedName, resolvedPath]) => {
         return [requestedName, path.relative(projectDir, resolvedPath)]
@@ -98,45 +89,6 @@ function createRelativeDepMap (projectDir, moduleId, bifyDepMap) {
   )
 }
 
-function createModuleDefinition (moduleId, moduleSource, globalShimNames, cjsDepNames, relativeDepMap) {
-  const depsForAmd = [...globalShimNames, ...cjsDepNames]
-  const serializedDepsArray = str(depsForAmd, null, 2)
+function createModuleDefinition (moduleId, moduleSource, relativeDepMap) {
   return `gatorRuntime.defineModule(${str(moduleId)}, ${str(relativeDepMap)}, function(require, exports, module){\n\n${moduleSource}\n\n})`
-}
-
-function getDepMapResolvedPath (projectDir, fromPath, toPath) {
-  // only resolve if explicitly absolute or relative  
-  if (!toPath.startsWith(path.sep) && !toPath.startsWith('.')) {
-    return toPath
-  }
-  const fullResolvedPath = path.resolve(fromPath, toPath)
-  const relativeResolved = path.relative(projectDir, fullResolvedPath)
-  return removeExtension(relativeResolved)
-}
-
-function getDepMapRelativePath (fromPath, toPath) {
-  const relative = getRelativePath(fromPath, toPath)
-  return removeExtension(relative)
-}
-
-function removeExtension (filepath) {
-  // amd doesnt like the extension present (omfg)
-  if (!filepath.includes('.js')) {
-    return filepath
-  }
-  return filepath.slice(0, filepath.indexOf(path.extname(filepath)))
-}
-
-function getRelativePath (fromPath, toPath) {
-  let result = path.relative(fromPath, toPath)
-  return result
-  // i thought this was a good idea, maybe not bc amd tries to normalize
-
-  // // ensure path starts with './' or '../'
-  // if (result.startsWith(`..${path.sep}`)) return result
-  // return `.${path.sep}${result}`
-}
-
-function createScriptTag (src) {
-  return `<script type="text/javascript" src="./${src}"></script>`
 }

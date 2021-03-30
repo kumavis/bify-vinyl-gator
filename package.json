@@ -1,14 +1,21 @@
 {
   "dependencies": {
+    "requirejs": "^2.3.6",
     "through2": "^4.0.2",
-    "vinyl": "^2.2.1",
-    "requirejs": "^2.3.6"
+    "vinyl": "^2.2.1"
   },
   "devDependencies": {
+    "@metamask/eslint-config": "^4.0.0",
     "browserify": "^17.0.0",
+    "eslint": "^7.7.0",
+    "eslint-plugin-import": "^2.22.0",
+    "eslint-plugin-node": "^11.1.0",
     "vinyl-fs": "^3.0.3"
   },
   "scripts": {
     "test": "rm -rf dist/* && node build.js"
+  },
+  "engines": {
+    "node": ">=12.0.0"
   }
 }
