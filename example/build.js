@@ -1,13 +1,13 @@
 const path = require('path')
 const browserify = require('browserify')
 const vfs = require('vinyl-fs')
-const bifyAmdVinylPlugin = require('../src/plugin')
+const bifyVinylGatorPlugin = require('../src/plugin')
 
 const sampleEntryFile = path.join(__dirname, 'example.js')
 const distDir = path.join(__dirname, '..', 'dist')
 
 const bundler = browserify([sampleEntryFile], {
-  plugin: [bifyAmdVinylPlugin],
+  plugin: [bifyVinylGatorPlugin],
   // required options
   dedupe: false,
   fullPaths: true,

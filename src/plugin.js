@@ -6,19 +6,26 @@ const VinylFile = require('vinyl')
 const str = JSON.stringify
 
 module.exports = plugin
+module.exports.args = {
+  dedupe: false,
+  fullPaths: true,
+}
 
 function plugin (browserify, pluginOpts) {
-  const projectDir = pluginOpts.projectDir || process.cwd()
   // setup the plugin in a re-bundle friendly way
   browserify.on('reset', setupPlugin)
   setupPlugin()
 
   function setupPlugin () {
-    browserify.pipeline.get('pack').splice(0, 1, createPacker({ projectDir }))
+    browserify.pipeline.get('pack').splice(0, 1, createPacker(pluginOpts))
   }
 }
 
-function createPacker ({ projectDir }) {
+function createPacker ({
+  projectDir = process.cwd(),
+  includeHtml = true,
+  includeStart = true,
+}) {
   const entryFiles = []
   const stream = through.obj(onModule, onDone)
   return stream
@@ -31,7 +38,7 @@ function createPacker ({ projectDir }) {
     }
     // create and record relative depMap
     const relativeDepMap = createRelativeDepMap(projectDir, moduleData.deps)
-    // transform module into AMD and output as vinyl file
+    // transform module into gator format and output as vinyl file
     const transformedSource = createModuleDefinition(relativePath, moduleData.source, relativeDepMap)
     const moduleFile = new VinylFile({
       cwd: projectDir,
@@ -43,34 +50,38 @@ function createPacker ({ projectDir }) {
   }
 
   function onDone () {
-    // add the requirejs amd runtime
+    // add the requirejs gator runtime
     /* eslint-disable-next-line node/no-sync */
     const runtimeContent = fs.readFileSync(path.join(__dirname, 'runtime.js'))
     const runtimeFile = new VinylFile({
       cwd: projectDir,
-      path: '__runtime__.js',
+      path: 'gator-runtime.js',
       contents: runtimeContent,
     })
     stream.push(runtimeFile)
     // add the entrypoint callers
-    /* eslint-disable-next-line node/no-sync */
-    const startContent = fs.readFileSync(path.join(__dirname, 'start.js.template'), 'utf8')
-      .split('{{entryFiles}}').join(str(entryFiles))
-    const startFile = new VinylFile({
-      cwd: projectDir,
-      path: '__start__.js',
-      contents: Buffer.from(startContent, 'utf8'),
-    })
-    stream.push(startFile)
+    if (includeStart) {
+      /* eslint-disable-next-line node/no-sync */
+      const startContent = fs.readFileSync(path.join(__dirname, 'start.js.template'), 'utf8')
+        .split('{{entryFiles}}').join(str(entryFiles))
+      const startFile = new VinylFile({
+        cwd: projectDir,
+        path: '__start.js__',
+        contents: Buffer.from(startContent, 'utf8'),
+      })
+      stream.push(startFile)
+    }
     // add an html entry point
-    /* eslint-disable-next-line node/no-sync */
-    const htmlContent = fs.readFileSync(path.join(__dirname, 'htmlManifest.html'))
-    const htmlFile = new VinylFile({
-      cwd: projectDir,
-      path: 'index.html',
-      contents: htmlContent,
-    })
-    stream.push(htmlFile)
+    if (includeHtml) {
+      /* eslint-disable-next-line node/no-sync */
+      const htmlContent = fs.readFileSync(path.join(__dirname, 'htmlManifest.html'))
+      const htmlFile = new VinylFile({
+        cwd: projectDir,
+        path: 'index.html',
+        contents: htmlContent,
+      })
+      stream.push(htmlFile)
+    }
     // trigger end of stream
     stream.push(null)
   }
