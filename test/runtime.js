@@ -1,4 +1,6 @@
 const test = require('ava')
+
+// runtime defines itself on the globalThis
 /* eslint-disable-next-line import/no-unassigned-import */
 require('../src/runtime.js')
 

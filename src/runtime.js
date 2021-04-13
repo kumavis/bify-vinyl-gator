@@ -27,7 +27,8 @@
         resolve(moduleEntry)
       }
       // queue loading of all deps
-      Object.values(depMap).filter(Boolean).forEach((entry) => gatorRuntime.requestModule(entry))
+      // disabling cuz we're manually adding scripts to DOM
+      // Object.values(depMap).filter(Boolean).forEach((entry) => gatorRuntime.requestModule(entry))
     },
     requestModule (moduleId) {
       // if already registered, skip
